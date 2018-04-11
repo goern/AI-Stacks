@@ -1,7 +1,8 @@
 // Openshift project
 OPENSHIFT_SERVICE_ACCOUNT = 'jenkins'
-DOCKER_REPO_URL = 'docker-registry.default.svc.cluster.local:5000'
-CI_NAMESPACE= 'ai-coe'
+DOCKER_REGISTRY = env.CI_DOCKER_REGISTRY ?: 'docker-registry.default.svc.cluster.local:5000'
+CI_NAMESPACE= env.CI_NAMESPACE ?: 'ai-coe'
+CI_TEST_NAMESPACE = env.CI_AISTACKS_TEST_NAMESPACE ?: 'thoth-test-aistacks'
 
 // Defaults for SCM operations
 env.ghprbGhRepository = env.ghprbGhRepository ?: 'goern/AI-Stacks'
@@ -28,6 +29,18 @@ tagMap['base-notebook'] = STABLE_LABEL
 // IRC properties
 IRC_NICK = "aicoe-bot"
 IRC_CHANNEL = "#thoth-station"
+
+// github-organization-plugin jobs are named as 'org/repo/branch'
+// we don't want to assume that the github-organization job is at the top-level
+// instead we get the total number of tokens (size) 
+// and work back from the branch level Pipeline job where this would actually be run
+// Note: that branch job is at -1 because Java uses zero-based indexing
+tokens = "${env.JOB_NAME}".tokenize('/')
+org = tokens[tokens.size()-3]
+repo = tokens[tokens.size()-2]
+branch = tokens[tokens.size()-1]
+
+echo "${org} ${repo} ${branch}"
 
 properties(
     [
@@ -63,7 +76,7 @@ pipeline {
     agent {
         kubernetes {
             cloud 'openshift'
-            label 'ai-stacks-pipeline-' + env.ghprbActualCommit
+            label 'ai-stacks'
             serviceAccount OPENSHIFT_SERVICE_ACCOUNT
             containerTemplate {
                 name 'jnlp'
@@ -75,13 +88,6 @@ pipeline {
         }
     }
     stages {
-        stage("Setup Build Templates") {
-            steps {
-                script {
-                    aIStacksPipelineUtils.createBuildConfigs(CI_NAMESPACE)
-                }
-            }
-        }
         stage("Get Changelog") {
             steps {
                 node('master') {
@@ -203,21 +209,25 @@ pipeline {
     post {
         always {
             script {
-                String prMsg = ""
-                if (env.ghprbActualCommit != null && env.ghprbActualCommit != "master") {
-                    prMsg = "(PR #${env.ghprbPullId} ${env.ghprbPullAuthorLogin})"
-                }
-                def message = "${JOB_NAME} ${prMsg} build #${BUILD_NUMBER}: ${currentBuild.currentResult}: ${BUILD_URL}"
+                // junit 'reports/*.xml'
 
-                mattermostSend channel: ${IRC_CHANNEL}, icon: 'https://avatars1.githubusercontent.com/u/33906690', message: "${message} ${env.BUILD_URL}"
-                pipelineUtils.sendIRCNotification("${IRC_NICK}", ${IRC_CHANNEL}, message)
+                pipelineUtils.sendIRCNotification("${IRC_NICK}", 
+                    IRC_CHANNEL, 
+                    "${JOB_NAME} #${BUILD_NUMBER}: ${currentBuild.currentResult}: ${BUILD_URL}")
             }
         }
         success {
             echo "All Systems GO!"
         }
         failure {
-            error "BREAK BREAK BREAK - build failed!"
+            script {
+                mattermostSend channel: "#thoth-station", 
+                    icon: 'https://avatars1.githubusercontent.com/u/33906690', 
+                    message: "${JOB_NAME} #${BUILD_NUMBER}: ${currentBuild.currentResult}: ${BUILD_URL}"
+
+                error "BREAK BREAK BREAK - build failed!"
+            }
         }
     }
+
 }
