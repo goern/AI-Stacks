@@ -102,12 +102,12 @@ pipeline {
                         steps { // FIXME we could have a conditional build here
                             echo "Building Tensorflow container image..."
                             script {
-                                tagMap['tensorflow-fedora27'] = aIStacksPipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27")
+                                tagMap['tensorflow-fedora27'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27")
                             }
 
                             echo "Building Tensorflow Test container image..."
                             script {
-                                tagMap['tensorflow-fedora27-test'] = aIStacksPipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27-test")
+                                tagMap['tensorflow-fedora27-test'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27-test")
                             }
                             sh 'curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" http://user-api.thoth-test-core.svc.cluster.local/api/v1/analyze?image=docker-registry.default.svc%3A5000%2Fthoth-test-aistacks%2Ftensorflow-serving-gpu-s2i&analyzer=fridex%2Fthoth-package-extract&debug=true'
                         }          
