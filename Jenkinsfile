@@ -4,17 +4,25 @@ DOCKER_REGISTRY = env.CI_DOCKER_REGISTRY ?: 'docker-registry.default.svc.cluster
 CI_NAMESPACE= env.CI_PIPELINE_NAMESPACE ?: 'ai-coe'
 CI_TEST_NAMESPACE = env.CI_AISTACKS_TEST_NAMESPACE ?: 'thoth-test-aistacks'
 
-// Defaults for SCM operations
-env.ghprbGhRepository = env.ghprbGhRepository ?: 'goern/AI-Stacks'
-env.ghprbActualCommit = env.ghprbActualCommit ?: 'master'
+// github-organization-plugin jobs are named as 'org/repo/branch'
+// we don't want to assume that the github-organization job is at the top-level
+// instead we get the total number of tokens (size) 
+// and work back from the branch level Pipeline job where this would actually be run
+// Note: that branch job is at -1 because Java uses zero-based indexing
+tokens = "${env.JOB_NAME}".tokenize('/')
+org = tokens[tokens.size()-3]
+repo = tokens[tokens.size()-2]
+branch = tokens[tokens.size()-1]
+
+echo "${org} ${repo} ${branch}"
 
 // If this PR does not include an image change, then use this tag
-STABLE_LABEL = "stable"
+STABLE_LABEL = branch
 tagMap = [:]
 
 // Initialize
-tagMap['tensorflow-fedora27'] = '1.4.1'
-tagMap['tensorflow-fedora27-test'] = '1.4.1'
+tagMap['tensorflow-fedora27'] = STABLE_LABEL
+tagMap['tensorflow-fedora27-test'] = STABLE_LABEL
 tagMap['tensorflow-centos7-python3'] = STABLE_LABEL
 tagMap['scikit-image-centos7-python3'] = STABLE_LABEL
 tagMap['scikit-image-centos7-python2'] = STABLE_LABEL
@@ -29,18 +37,6 @@ tagMap['base-notebook'] = STABLE_LABEL
 // IRC properties
 IRC_NICK = "aicoe-bot"
 IRC_CHANNEL = "#thoth-station"
-
-// github-organization-plugin jobs are named as 'org/repo/branch'
-// we don't want to assume that the github-organization job is at the top-level
-// instead we get the total number of tokens (size) 
-// and work back from the branch level Pipeline job where this would actually be run
-// Note: that branch job is at -1 because Java uses zero-based indexing
-tokens = "${env.JOB_NAME}".tokenize('/')
-org = tokens[tokens.size()-3]
-repo = tokens[tokens.size()-2]
-branch = tokens[tokens.size()-1]
-
-echo "${org} ${repo} ${branch}"
 
 properties(
     [
@@ -106,13 +102,14 @@ pipeline {
                         steps { // FIXME we could have a conditional build here
                             echo "Building Tensorflow container image..."
                             script {
-                                tagMap['tensorflow-fedora27'] = aIStacksPipelineUtils.buildImageWithTag(CI_TEST_NAMESPACE, "tensorflow-fedora27", '1.4.1')
+                                tagMap['tensorflow-fedora27'] = aIStacksPipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27")
                             }
 
                             echo "Building Tensorflow Test container image..."
                             script {
-                                tagMap['tensorflow-fedora27-test'] = aIStacksPipelineUtils.buildImageWithTag(CI_TEST_NAMESPACE, "tensorflow-fedora27-test", '1.4.1')
+                                tagMap['tensorflow-fedora27-test'] = aIStacksPipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27-test")
                             }
+                            sh 'curl -X POST --header "Content-Type: application/json" --header "Accept: application/json" http://user-api.thoth-test-core.svc.cluster.local/api/v1/analyze?image=docker-registry.default.svc%3A5000%2Fthoth-test-aistacks%2Ftensorflow-serving-gpu-s2i&analyzer=fridex%2Fthoth-package-extract&debug=true'
                         }          
                     }
                     stage("Tensorflow: CentOS7+Python3") {
@@ -173,14 +170,14 @@ pipeline {
                                 tagMap['tf-base-notebook'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'tf-base-notebook')
                             }
                         }                
-                    }
+                    } /*
                     stage("GCC 6.3.0: CentOS7") {
                         steps { // FIXME we could have a conditional build here
                             script {
                                 tagMap['gcc630-centos7'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "gcc630-centos7")
                             }
                         }                
-                    } 
+                    } */
                 }
         }
         stage("Run Tests") {
