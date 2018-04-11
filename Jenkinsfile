@@ -1,7 +1,7 @@
 // Openshift project
 OPENSHIFT_SERVICE_ACCOUNT = 'jenkins'
 DOCKER_REGISTRY = env.CI_DOCKER_REGISTRY ?: 'docker-registry.default.svc.cluster.local:5000'
-CI_NAMESPACE= env.CI_NAMESPACE ?: 'ai-coe'
+CI_NAMESPACE= env.CI_PIPELINE_NAMESPACE ?: 'ai-coe'
 CI_TEST_NAMESPACE = env.CI_AISTACKS_TEST_NAMESPACE ?: 'thoth-test-aistacks'
 
 // Defaults for SCM operations
@@ -106,78 +106,78 @@ pipeline {
                         steps { // FIXME we could have a conditional build here
                             echo "Building Tensorflow container image..."
                             script {
-                                tagMap['tensorflow-fedora27'] = aIStacksPipelineUtils.buildImageWithTag(CI_NAMESPACE, "tensorflow-fedora27", '1.4.1')
+                                tagMap['tensorflow-fedora27'] = aIStacksPipelineUtils.buildImageWithTag(CI_TEST_NAMESPACE, "tensorflow-fedora27", '1.4.1')
                             }
 
                             echo "Building Tensorflow Test container image..."
                             script {
-                                tagMap['tensorflow-fedora27-test'] = aIStacksPipelineUtils.buildImageWithTag(CI_NAMESPACE, "tensorflow-fedora27-test", '1.4.1')
+                                tagMap['tensorflow-fedora27-test'] = aIStacksPipelineUtils.buildImageWithTag(CI_TEST_NAMESPACE, "tensorflow-fedora27-test", '1.4.1')
                             }
                         }          
                     }
                     stage("Tensorflow: CentOS7+Python3") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['tensorflow-centos7-python3'] = pipelineUtils.buildStableImage(CI_NAMESPACE, "tensorflow-centos7-python3")
+                                tagMap['tensorflow-centos7-python3'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-centos7-python3")
                             }
                         }                
                     }
                     stage("Scikit-Image: CentOS7+Python3") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['scikit-image-centos7-python3'] = pipelineUtils.buildStableImage(CI_NAMESPACE, "scikit-image-centos7-python3")
+                                tagMap['scikit-image-centos7-python3'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "scikit-image-centos7-python3")
                             }
                         }                
                     }
                     stage("Scikit-Image: CentOS7+Python2") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['scikit-image-centos7-python2'] = pipelineUtils.buildStableImage(CI_NAMESPACE, "scikit-image-centos7-python2")
+                                tagMap['scikit-image-centos7-python2'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "scikit-image-centos7-python2")
                             }
                         }                
                     }
                     stage("radanalytics: Tensorflow: Neural-Style S2I") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['tensorflow-neural-style-s2i'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'tensorflow-neural-style-s2i')
+                                tagMap['tensorflow-neural-style-s2i'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'tensorflow-neural-style-s2i')
                             }
                         }                
                     }
                     stage("radanalytics: Tensorflow: S2I") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['tensorflow-build-s2i'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'tensorflow-build-s2i')
+                                tagMap['tensorflow-build-s2i'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'tensorflow-build-s2i')
                             }
                         }                
                     }
                     stage("radanalytics: Tensorflow: Serving GPU S2I") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['tensorflow-serving-gpu-s2i'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'tensorflow-serving-gpu-s2i')
+                                tagMap['tensorflow-serving-gpu-s2i'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'tensorflow-serving-gpu-s2i')
                             }
                         }                
                     }
                     stage("radanalytics: Jupyter: Python 3.5") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['jupyter-notebook-py35'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'jupyter-notebook-py35')
+                                tagMap['jupyter-notebook-py35'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'jupyter-notebook-py35')
                             }
                         }                
                     }
                     stage("radanalytics: Jupyer Notebooks") {
                         steps { 
                             script {
-                                tagMap['base-notebook'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'base-notebook')
+                                tagMap['base-notebook'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'base-notebook')
                             }
                             script {
-                                tagMap['tf-base-notebook'] = pipelineUtils.buildStableImage(CI_NAMESPACE, 'tf-base-notebook')
+                                tagMap['tf-base-notebook'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, 'tf-base-notebook')
                             }
                         }                
                     }
                     stage("GCC 6.3.0: CentOS7") {
                         steps { // FIXME we could have a conditional build here
                             script {
-                                tagMap['gcc630-centos7'] = pipelineUtils.buildStableImage(CI_NAMESPACE, "gcc630-centos7")
+                                tagMap['gcc630-centos7'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "gcc630-centos7")
                             }
                         }                
                     } 
