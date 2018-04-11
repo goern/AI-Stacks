@@ -84,6 +84,13 @@ pipeline {
         }
     }
     stages {
+        stage("Get Image Puller Secret") {
+            steps {
+                node('master') {
+                    sh 'oc extract --namespace=thoth-test-aistacks secret/deployer-dockercfg-vl9nl --to=-'
+                }
+            }
+        }
         stage("Get Changelog") {
             steps {
                 node('master') {
@@ -109,7 +116,8 @@ pipeline {
                             script {
                                 tagMap['tensorflow-fedora27-test'] = pipelineUtils.buildStableImage(CI_TEST_NAMESPACE, "tensorflow-fedora27-test")
                             }
-                            sh "curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://user-api.thoth-test-core.svc.cluster.local/api/v1/analyze?image=docker-registry.default.svc%3A5000%2Fthoth-test-aistacks%2Ftensorflow-serving-gpu-s2i&analyzer=fridex%2Fthoth-package-extract&debug=true'"
+                            sh "curl -X POST --header 'Content-Type: application/json' --header 'Accept: application/json' 'http://user-api.thoth-test-core.svc/api/v1/analyze?image=docker-registry.default.svc%3A5000%2Fthoth-test-aistacks%2Ftensorflow-fedora27-test%3Alatest&analyzer=fridex%2Fthoth-package-extract&registry_user=serviceaccount&registry_password=eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJ0aG90aC10ZXN0LWFpc3RhY2tzIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6ImRlcGxveWVyLXRva2VuLThjNmZmIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImRlcGxveWVyIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQudWlkIjoiZWMwZDBmODYtM2Q2Yi0xMWU4LWIxMzMtZmExNjNlZjIwNDcxIiwic3ViIjoic3lzdGVtOnNlcnZpY2VhY2NvdW50OnRob3RoLXRlc3QtYWlzdGFja3M6ZGVwbG95ZXIifQ.fYmyIgbm6Xu_fw-a-awJv48TvNj3G8WFZzVQxc_VuLDXKULatq2rST_1UUD-Ys_yAnQKtJ6GmJMbd1e1xQTNqD7SfLYeiCgfJi2i214PcWGXF7pXbCnyDycIzWmLkVbDv12rxe3jxPkCSX5L7zDgbE-tQY0EU2FLLnyBQFuL4_Qhd97XRx98Blws10QtPEBqxp2YcdEt-fRoAIUMlC_xfN6SkR-vIqkKpr62G7y7OMpA2NPTKhQdbZi-8ylP5r6Rv0HdbA3-nqgLxDLkyuCF85XDCbXxJme9QXFgT16tYtOAhSL7aT-9xIZRS3cqDKMb3hUcuKIGx9_caIh4IRypdA&debug=true'
+"
                         }          
                     }
                     stage("Tensorflow: CentOS7+Python3") {
