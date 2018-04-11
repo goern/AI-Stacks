@@ -84,13 +84,13 @@ pipeline {
         }
     }
     stages {
-        stage("Get Image Puller Secret") {
+/*        stage("Get Image Puller Secret") {
             steps {
                 node('master') {
                     sh 'oc extract --namespace=thoth-test-aistacks secret/deployer-dockercfg-vl9nl --to=-'
                 }
             }
-        }
+        } */
         stage("Get Changelog") {
             steps {
                 node('master') {
